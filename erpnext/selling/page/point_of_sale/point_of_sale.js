@@ -168,7 +168,11 @@ erpnext.pos.PointOfSale = class PointOfSale {
 			if(field === 'serial_no') {
 				value = item.serial_no + '\n'+ value;
 			}
-
+			//item.attended_by ="EMP/0005";
+			//console.log(this.frm.doc);
+			//console.log(this);
+			//console.log(me.fieldnd('.employee_field'));
+			
 			// if actual_batch_qty and actual_qty if there is only one batch. In such
 			// a case, no point showing the dialog
 			const show_dialog = item.has_serial_no || item.has_batch_no;
@@ -787,23 +791,18 @@ class POSCart {
 				args: {
 					doc: this.frm.doc,
 					"customer":this.frm.doc.customer,
-					"item":item.item_code
+					"item":item.item_code,
+					"qty":item.qty
 				},
 			}).then(r => {
 				if(r.message) {
-					console.log(r.message);
-					//$item.find('.rate').text(format_currency(0, this.frm.doc.currency));
-					// $item.find('.rate').set_value('.rate',0);
-					// //cur_frm.refresh_field();
-					// this.frm.doc.set_value(rate,0);
-					//$item.find('.rate').val(item.qty);
-					
+					console.log(r.message);				
 					$item.find('.discount').text( 100+ '%');
 					$item.find('.rate').text(format_currency(0, this.frm.doc.currency));
 
 
 				frappe.model.set_value(this.frm.doctype, this.frm.docname,
-				'discount_amount', item.rate);
+				'discount_amount', (item.qty*item.rate));
 				this.frm.trigger('discount_amount')
 				.then(() => {
 					this.update_discount_fields();
@@ -826,26 +825,27 @@ class POSCart {
 				}
 			});
 			$item.appendTo(this.$cart_items);
+
 			$item.employee_field = frappe.ui.form.make_control({
 			df: {
 				fieldtype: 'Link',
 				fieldname: 'employee',
 				options: 'Service Providers', //Service Providers
 				reqd: 1,
-				// onchange: () => {
-				// 	$item.events.on_customer_change($item.employee_field.get_value());
-				// }
+				onchange: () => {
+					const server_item = this.frm.doc.items.find(i => i.item_code === item.item_code);
+					server_item.attended_by =$item.employee_field.get_value();
+					console.log(["server_item",server_item]);
+					//$item.events.on_customer_change($item.employee_field.get_value());
+				}
 			},
 			parent: $item.find('.employee_field'),
 			render_input: true
 		});
 
-		$item.employee_field.set_value(this.frm.doc.attended_by);
-		frappe.model.set_value(item.attended_by, $item.employee_field);
-		console.log(this.frm.doc)
-		console.log($item.employee_field)
-		console.log(item.attended_by);
-		console.log(this.frm.doc.attended_by);
+		//$item.employee_field.set_value(this.frm.doc.attended_by);
+		//frappe.model.set_value(item.doctype, item.name, "attended_by", $item.employee_field.get_value())
+		//console.log(["attend",item.doctype,item.name,$item.employee_field.get_value()])
 
 		}
 		this.highlight_item(item.item_code);
@@ -865,6 +865,35 @@ class POSCart {
 			$item.find('.rate').text(format_currency(item.rate, this.frm.doc.currency));
 			$item.addClass(indicator_class);
 			$item.removeClass(remove_class);
+						frappe.call({
+				method: 'package.packages.doctype.packages.packages.from_pos_call',
+				// freeze: true,
+				args: {
+					doc: this.frm.doc,
+					"customer":this.frm.doc.customer,
+					"item":item.item_code,
+					"qty":item.qty
+				},
+			}).then(r => {
+				if(r.message) {
+					console.log(r.message);				
+					$item.find('.discount').text( 100+ '%');
+					$item.find('.rate').text(format_currency(0, this.frm.doc.currency));
+
+
+				frappe.model.set_value(this.frm.doctype, this.frm.docname,
+				'discount_amount', (item.qty*item.rate));
+				this.frm.trigger('discount_amount')
+				.then(() => {
+					this.update_discount_fields();
+					this.update_taxes_and_totals();
+					this.update_grand_total();
+					console.log("trigger");
+				});
+				}
+			});
+			// frappe.model.set_value(item.doctype, item.name, "attended_by", $item.find('.employee_field'))
+			// console.log(["attend",item.doctype,item.name,$item.find('.employee_field')])
 		} else {
 			$item.remove();
 		}
@@ -981,7 +1010,7 @@ class POSCart {
 									precision('discount_amount')));
 								discount_wrapper.trigger('change');
 								});
-							frappe.model.set_value(me.frm.doc.promo_code, data.code);
+							me.frm.doc.promo_code=data.code;
 							console.log(me.frm.doc.promo_code)
 							console.log(me.frm.doc)
 
