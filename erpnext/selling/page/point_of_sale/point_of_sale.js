@@ -841,7 +841,10 @@ class POSCart {
 		});
 
 		$item.employee_field.set_value(this.frm.doc.attended_by);
-		console.log("emp"+this.frm.doc);
+		frappe.model.set_value(item.attended_by, $item.employee_field);
+		console.log(this.frm.doc)
+		console.log($item.employee_field)
+		console.log(item.attended_by);
 		console.log(this.frm.doc.attended_by);
 
 		}
@@ -978,6 +981,9 @@ class POSCart {
 									precision('discount_amount')));
 								discount_wrapper.trigger('change');
 								});
+							frappe.model.set_value(me.frm.doc.promo_code, data.code);
+							console.log(me.frm.doc.promo_code)
+							console.log(me.frm.doc)
 
 							}
 						else{ msgprint("invalid Promocode");}
@@ -996,7 +1002,7 @@ class POSCart {
 						if(r.message) {
 							console.log(r.message);
 							frappe.model.set_value(me.frm.doctype, me.frm.docname,
-							'discount_amount', r.message);
+							'discount_amount', flt(r.message));
 							me.frm.trigger('discount_amount')
 							.then(() => {
 								me.update_discount_fields();
