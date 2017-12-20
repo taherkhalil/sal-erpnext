@@ -14,7 +14,7 @@ frappe.ui.form.CustomerQuickEntryForm = frappe.ui.form.QuickEntryForm.extend({
 		var variant_fields = [{
 			fieldtype: "Section Break",
 			label: __("Primary Contact Details"),
-			collapsible: 1
+			collapsible: 0
 		},
 		{
 			label: __("Email Id"),
@@ -27,6 +27,7 @@ frappe.ui.form.CustomerQuickEntryForm = frappe.ui.form.QuickEntryForm.extend({
 		{
 			label: __("Mobile Number"),
 			fieldname: "mobile_no",
+			reqd: 1,
 			fieldtype: "Data"
 		},
 		{
