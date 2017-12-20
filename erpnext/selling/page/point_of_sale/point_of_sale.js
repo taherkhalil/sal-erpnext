@@ -992,6 +992,7 @@ class POSCart {
 					}	//if end promo
 
 					if(data.sel == "Voucher"){
+						console.log(me.frm.doc.grand_total)
 						frappe.call({
 							method: 'voucher.voucher.doctype.vouchers.vouchers.from_pos_call',
 							args: {
