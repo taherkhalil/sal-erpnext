@@ -1040,6 +1040,7 @@ class POSCart {
 								me.update_grand_total();
 								console.log("trigger");
 							});
+							me.frm.doc.voucher=data.code;
 
 							}
 						else{ msgprint("invalid voucher");}
