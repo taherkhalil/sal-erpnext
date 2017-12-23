@@ -783,7 +783,7 @@ class POSCart {
 			this.update_item(item);
 		} else if (flt(item.qty) > 0.0) {
 			// add to cart
-			const $item = $(this.get_item_html(item));
+			//const $item = $(this.get_item_html(item));
 			
 			frappe.call({
 				method: 'package.packages.doctype.packages.packages.from_pos_call',
@@ -796,34 +796,28 @@ class POSCart {
 				},
 			}).then(r => {
 				if(r.message) {
-					console.log(r.message);				
-					$item.find('.discount').text( 100+ '%');
-					$item.find('.rate').text(format_currency(0, this.frm.doc.currency));
-
-
-				frappe.model.set_value(this.frm.doctype, this.frm.docname,
-				'discount_amount', (item.qty*item.rate));
-				this.frm.trigger('discount_amount')
-				.then(() => {
-					this.update_discount_fields();
-					this.update_taxes_and_totals();
-					this.update_grand_total();
-					console.log("trigger");
-				});
-					// this.update_taxes_and_totals();
-					// this.update_grand_total();
-
-					//this.frm.doc = r.message;
-					// frappe.show_alert({
-					// 	indicator: 'green',
-					// 	message: __(`Sales invoice ${r.message.name} created succesfully`)
-					// });
-
-					// this.toggle_editing();
-					// this.set_form_action();
-					// this.set_primary_action_in_modal();
+					console.log(r.message);
+					
+					const server_item = this.frm.doc.items.find(i => i.item_code === item.item_code);
+					server_item.discount_percentage =100;
+					server_item.rate =0;
+					console.log(["item dis",item.discount_percentage])	;
+					//$item.set_value(item.discount_percentage,100);
+					$item.find('.discount').text(item.discount_percentage + '%');
+					$item.find('.rate').text(item.rate);
+					console.log(item);	
+					// frappe.model.set_value(this.frm.doctype, this.frm.docname,
+					// 'discount_amount', ((item.qty*item.rate)+cur_dis_am));
+					this.frm.trigger('discount_amount')
+					.then(() => {
+						this.update_discount_fields();
+						this.update_taxes_and_totals();
+						this.update_grand_total();
+						console.log("trigger");
+					});
 				}
 			});
+			const $item = $(this.get_item_html(item));
 			$item.appendTo(this.$cart_items);
 
 			$item.employee_field = frappe.ui.form.make_control({
@@ -854,6 +848,7 @@ class POSCart {
 
 	update_item(item) {
 		const $item = this.$cart_items.find(`[data-item-code="${item.item_code}"]`);
+		let cur_dis_am= this.frm.doc.discount_amount;
 
 		if(item.qty > 0) {
 			const is_stock_item = this.get_item_details(item.item_code).is_stock_item;
@@ -865,33 +860,38 @@ class POSCart {
 			$item.find('.rate').text(format_currency(item.rate, this.frm.doc.currency));
 			$item.addClass(indicator_class);
 			$item.removeClass(remove_class);
-						frappe.call({
-				method: 'package.packages.doctype.packages.packages.from_pos_call',
-				// freeze: true,
-				args: {
-					doc: this.frm.doc,
-					"customer":this.frm.doc.customer,
-					"item":item.item_code,
-					"qty":item.qty
-				},
-			}).then(r => {
-				if(r.message) {
-					console.log(r.message);				
-					$item.find('.discount').text( 100+ '%');
-					$item.find('.rate').text(format_currency(0, this.frm.doc.currency));
-
-
-				frappe.model.set_value(this.frm.doctype, this.frm.docname,
-				'discount_amount', (item.qty*item.rate));
-				this.frm.trigger('discount_amount')
-				.then(() => {
-					this.update_discount_fields();
-					this.update_taxes_and_totals();
-					this.update_grand_total();
-					console.log("trigger");
-				});
-				}
-			});
+			// 			frappe.call({
+			// 	method: 'package.packages.doctype.packages.packages.from_pos_call',
+			// 	// freeze: true,
+			// 	args: {
+			// 		doc: this.frm.doc,
+			// 		"customer":this.frm.doc.customer,
+			// 		"item":item.item_code,
+			// 		"qty":item.qty
+			// 	},
+			// }).then(r => {
+			// 	if(r.message) {
+			// 	console.log(r.message);
+					
+			// 		const server_item = this.frm.doc.items.find(i => i.item_code === item.item_code);
+			// 		server_item.discount_percentage =100;
+			// 		server_item.rate =0;
+			// 		console.log(["item dis",item.discount_percentage])	;
+			// 		//$item.set_value(item.discount_percentage,100);
+			// 		$item.find('.discount').text(item.discount_percentage + '%');
+			// 		$item.find('.rate').text(item.rate);
+			// 		console.log(item);	
+			// 		// frappe.model.set_value(this.frm.doctype, this.frm.docname,
+			// 		// 'discount_amount', ((item.qty*item.rate)+cur_dis_am));
+			// 		this.frm.trigger('discount_amount')
+			// 		.then(() => {
+			// 			this.update_discount_fields();
+			// 			this.update_taxes_and_totals();
+			// 			this.update_grand_total();
+			// 			console.log("trigger");
+			// 		});
+			// 	}
+			// });
 			// frappe.model.set_value(item.doctype, item.name, "attended_by", $item.find('.employee_field'))
 			// console.log(["attend",item.doctype,item.name,$item.find('.employee_field')])
 		} else {
@@ -992,7 +992,7 @@ class POSCart {
 			    {'fieldname': 'code', 'fieldtype': 'Data', 'label': 'Enter code', 'reqd': 1}  
 			],
 				function(data){
-					console.log(data);
+					// console.log(data);
 					if (data.sel == "Promocode"){
 						frappe.call({
 							method: 'promocode.promo_code.doctype.promo_code.promo_code.from_pos_call',
@@ -1021,7 +1021,7 @@ class POSCart {
 					}	//if end promo
 
 					if(data.sel == "Voucher"){
-						console.log(me.frm.doc.grand_total)
+						console.log(["in voucher total",me.frm.doc.grand_total]);
 						frappe.call({
 							method: 'voucher.voucher.doctype.vouchers.vouchers.from_pos_call',
 							args: {
