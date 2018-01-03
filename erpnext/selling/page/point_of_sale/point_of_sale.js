@@ -93,6 +93,7 @@ erpnext.pos.PointOfSale = class PointOfSale {
 			events: {
 				on_customer_change: (customer) => this.frm.set_value('customer', customer),
 				on_field_change: (item_code, field, value) => {
+					console.log(["make cart",item_code,field,value]);
 					this.update_item_in_cart(item_code, field, value);
 				},
 				on_numpad: (value) => {
@@ -147,6 +148,8 @@ erpnext.pos.PointOfSale = class PointOfSale {
 					if(!this.frm.doc.customer) {
 						frappe.throw(__('Please select a customer'));
 					}
+
+					console.log(["make_items",item,field,value]);
 					this.update_item_in_cart(item, field, value);
 					this.cart && this.cart.unselect_all();
 				}
@@ -155,6 +158,7 @@ erpnext.pos.PointOfSale = class PointOfSale {
 	}
 
 	update_item_in_cart(item_code, field='qty', value=1) {
+		console.log(["update item in cart",item_code]);
 		frappe.dom.freeze();
 		if(this.cart.exists(item_code)) {
 			const item = this.frm.doc.items.find(i => i.item_code === item_code);
@@ -184,6 +188,7 @@ erpnext.pos.PointOfSale = class PointOfSale {
 				this.update_item_in_frm(item, field, value)
 					.then(() => {
 						// update cart
+
 						this.update_cart_data(item);
 					});
 			}
@@ -212,6 +217,7 @@ erpnext.pos.PointOfSale = class PointOfSale {
 					this.select_batch_and_serial_no(item);
 				} else {
 					// update cart
+					console.log(["just before update",item]);
 					this.update_cart_data(item);
 				}
 			}
@@ -246,6 +252,7 @@ erpnext.pos.PointOfSale = class PointOfSale {
 	}
 
 	update_cart_data(item) {
+		console.log(["update cart data",item]);
 		this.cart.add_item(item);
 		this.cart.update_taxes_and_totals();
 		this.cart.update_grand_total();
@@ -319,6 +326,44 @@ erpnext.pos.PointOfSale = class PointOfSale {
 			this.frm.msgbox.hide();
 			this.make_new_invoice();
 		})
+	}
+
+	get_appointment_details(){
+		var me =this;
+		//const this = $(this);
+		frappe.prompt([
+		    {'fieldname': 'appointment', 'fieldtype': 'Link', 'label': 'Select Appointment','options':'Appointment', 'reqd': 1}  
+		],
+			function(data){
+				frappe.call({
+						method: 'appointment.appointment_manager.doctype.appointment.appointment.get_appointment_details',
+						args: {
+							apt_name: data.appointment
+						},
+					}).then(r => {
+					if(r.message) {
+						// console.log(r.message);
+						
+						// me.wrapper.find('.customer-field').set_value(r.message.customer);
+						//console.log(customer_field);
+						//customer_field.val(r.message.customer);
+						console.log(r.message.items);
+						for(var i in r.message.items){
+							console.log([i,r.message.items[i]]);
+							me.update_item_in_cart(i,"qty","+1");
+							//me.cart.add_item(i);
+
+
+						}
+						}	
+				
+					});	
+		
+			},
+			'Choose from Appoinment',
+			'select'
+		)
+		
 	}
 
 	change_pos_profile() {
@@ -494,6 +539,9 @@ erpnext.pos.PointOfSale = class PointOfSale {
 		this.page.add_menu_item(__('Change POS Profile'), function() {
 			me.change_pos_profile();
 		});
+		this.page.add_menu_item(__('Get from Appoinment'), function() {
+			me.get_appointment_details();
+		});
 	}
 
 	set_form_action() {
@@ -557,6 +605,9 @@ class POSCart {
 						<div class="promo-code/voucher">
 							${this.get_promo_voucherl()}
 						</div>
+						<div class="promo-code/voucher">
+							${this.get_app()}
+						</div>
 
 						<div class="grand-total">
 							${this.get_grand_total()}
@@ -606,6 +657,14 @@ class POSCart {
 			<div class="list-item">
 				<div class="list-item__content text-muted">${__('promo-code/voucher')}</div>
 				<div class="list-item__content list-item__content--flex-2 "><button class="btn btn-default btn-xs" data-action="pr">promo/voucher</button></div>
+			</div>
+		`;
+	}
+	get_app() {
+		return `
+			<div class="list-item">
+				<div class="list-item__content text-muted">${__('get appointment')}</div>
+				<div class="list-item__content list-item__content--flex-2 "><button class="btn btn-default btn-xs" data-action="appointment">fetch</button></div>
 			</div>
 		`;
 	}
@@ -777,6 +836,7 @@ class POSCart {
 
 	add_item(item) {
 		this.$empty_state.hide();
+		console.log(["add item",item]);
 
 		if (this.exists(item.item_code)) {
 			// update quantity
@@ -984,6 +1044,51 @@ class POSCart {
 					events.on_field_change(item_code, 'qty', '-1');
 				}
 			});
+		this.wrapper.on('click','[data-action="appointment"]',function(){
+			console.log("appointment");
+			frappe.prompt([
+		    {'fieldname': 'appointment', 'fieldtype': 'Link', 'label': 'Select Appointment','options':'Appointment', 'reqd': 1}  
+		],
+			function(data){
+				frappe.call({
+						method: 'appointment.appointment_manager.doctype.appointment.appointment.get_appointment_details',
+						args: {
+							apt_name: data.appointment
+						},
+					}).then(r => {
+					if(r.message) {
+						// console.log(r.message);
+						
+						// me.wrapper.find('.customer-field').set_value(r.message.customer);
+						//console.log(customer_field);
+						//customer_field.val(r.message.customer);`
+						me.customer_field.set_value(r.message.customer);
+						console.log(r.message.items);
+						for(var i in r.message.items){
+							console.log([i,r.message.items[i]]);
+							//me.add_item(i);
+
+							// me.update_item_in_cart(i,"qty","+1");
+
+
+						}
+						me.frm.doc.from_appointment=data.appointment;
+						console.log(["app",data.appointment]);
+						console.log(me.frm.doc);
+					}	
+				
+					});	
+		
+			},
+			'Choose from Appoinment',
+			'select'
+		)
+
+
+
+
+		});
+
 		this.wrapper.on('click', '[data-action="pr"]', function() {
 			//const $item = $(this);
 			console.log("ptomt");
@@ -1174,6 +1279,8 @@ class POSItems {
 				</div>
 				<div class="item-group-field">
 				</div>
+				<div class="item-group-field">
+				</div>
 			</div>
 			<div class="items-wrapper">
 			</div>
@@ -1321,6 +1428,7 @@ class POSItems {
 		if (items.length === 1 && (serial_no || batch_no || barcode)) {
 			this.events.update_cart(items[0].item_code,
 				'qty', '+1');
+			console.log("set_items_in cart");
 			this.reset_search_field();
 		}
 	}
@@ -1340,6 +1448,7 @@ class POSItems {
 	}
 
 	get(item_code) {
+		console.log(["get(item_code)",item_code]);
 		let item = {};
 		this.items.map(data => {
 			if (data.item_code === item_code) {
@@ -1404,6 +1513,7 @@ class POSItems {
 					'pos_profile': this.frm.doc.pos_profile
 				}
 			}).then(r => {
+				console.log(["get items",r.message]);
 				// const { items, serial_no, batch_no } = r.message;
 
 				// this.serial_no = serial_no || "";
