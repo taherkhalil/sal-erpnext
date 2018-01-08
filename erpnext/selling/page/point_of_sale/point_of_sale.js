@@ -1,5 +1,7 @@
 /* global Clusterize */
 frappe.provide('erpnext.pos');
+var thisposcart;
+
 
 frappe.pages['point-of-sale'].on_page_load = function(wrapper) {
 	frappe.ui.make_app_page({
@@ -30,6 +32,8 @@ erpnext.pos.PointOfSale = class PointOfSale {
 	constructor(wrapper) {
 		this.wrapper = $(wrapper).find('.layout-main-section');
 		this.page = wrapper.page;
+		thisposcart =this;
+		// console.log(["in pointofsaleclass",thisposcart]);
 
 		const assets = [
 			'assets/erpnext/js/pos/clusterize.js',
@@ -93,7 +97,7 @@ erpnext.pos.PointOfSale = class PointOfSale {
 			events: {
 				on_customer_change: (customer) => this.frm.set_value('customer', customer),
 				on_field_change: (item_code, field, value) => {
-					console.log(["make cart",item_code,field,value]);
+					// console.log(["make cart",item_code,field,value]);
 					this.update_item_in_cart(item_code, field, value);
 				},
 				on_numpad: (value) => {
@@ -149,7 +153,7 @@ erpnext.pos.PointOfSale = class PointOfSale {
 						frappe.throw(__('Please select a customer'));
 					}
 
-					console.log(["make_items",item,field,value]);
+					// console.log(["make_items",item,field,value]);
 					this.update_item_in_cart(item, field, value);
 					this.cart && this.cart.unselect_all();
 				}
@@ -158,7 +162,9 @@ erpnext.pos.PointOfSale = class PointOfSale {
 	}
 
 	update_item_in_cart(item_code, field='qty', value=1) {
-		console.log(["update item in cart",item_code]);
+		// console.log(["update item in cart",item_code]);
+		// console.log(["cust in update_item_in_cart", this.customer]);
+
 		frappe.dom.freeze();
 		if(this.cart.exists(item_code)) {
 			const item = this.frm.doc.items.find(i => i.item_code === item_code);
@@ -173,7 +179,7 @@ erpnext.pos.PointOfSale = class PointOfSale {
 				value = item.serial_no + '\n'+ value;
 			}
 			//item.attended_by ="EMP/0005";
-			//console.log(this.frm.doc);
+			// console.log(this.frm.doc);
 			//console.log(this);
 			//console.log(me.fieldnd('.employee_field'));
 			
@@ -217,7 +223,7 @@ erpnext.pos.PointOfSale = class PointOfSale {
 					this.select_batch_and_serial_no(item);
 				} else {
 					// update cart
-					console.log(["just before update",item]);
+					// console.log(["just before update",item]);
 					this.update_cart_data(item);
 				}
 			}
@@ -252,7 +258,7 @@ erpnext.pos.PointOfSale = class PointOfSale {
 	}
 
 	update_cart_data(item) {
-		console.log(["update cart data",item]);
+		// console.log(["update cart data",item]);
 		this.cart.add_item(item);
 		this.cart.update_taxes_and_totals();
 		this.cart.update_grand_total();
@@ -328,43 +334,43 @@ erpnext.pos.PointOfSale = class PointOfSale {
 		})
 	}
 
-	get_appointment_details(){
-		var me =this;
-		//const this = $(this);
-		frappe.prompt([
-		    {'fieldname': 'appointment', 'fieldtype': 'Link', 'label': 'Select Appointment','options':'Appointment', 'reqd': 1}  
-		],
-			function(data){
-				frappe.call({
-						method: 'appointment.appointment_manager.doctype.appointment.appointment.get_appointment_details',
-						args: {
-							apt_name: data.appointment
-						},
-					}).then(r => {
-					if(r.message) {
-						// console.log(r.message);
+	// get_appointment_details(){
+	// 	var me =this;
+	// 	//const this = $(this);
+	// 	frappe.prompt([
+	// 	    {'fieldname': 'appointment', 'fieldtype': 'Link', 'label': 'Select Appointment','options':'Appointment', 'reqd': 1}  
+	// 	],
+	// 		function(data){
+	// 			frappe.call({
+	// 					method: 'appointment.appointment_manager.doctype.appointment.appointment.get_appointment_details',
+	// 					args: {
+	// 						apt_name: data.appointment
+	// 					},
+	// 				}).then(r => {
+	// 				if(r.message) {
+	// 					// console.log(r.message);
 						
-						// me.wrapper.find('.customer-field').set_value(r.message.customer);
-						//console.log(customer_field);
-						//customer_field.val(r.message.customer);
-						console.log(r.message.items);
-						for(var i in r.message.items){
-							console.log([i,r.message.items[i]]);
-							me.update_item_in_cart(i,"qty","+1");
-							//me.cart.add_item(i);
+	// 					// me.wrapper.find('.customer-field').set_value(r.message.customer);
+	// 					//console.log(customer_field);
+	// 					//customer_field.val(r.message.customer);
+	// 					// console.log(r.message.items);
+	// 					for(var i in r.message.items){
+	// 						// console.log([i,r.message.items[i]]);
+	// 						me.update_item_in_cart(i,"qty","+1");
+	// 						//me.cart.add_item(i);
 
 
-						}
-						}	
+	// 					}
+	// 					}	
 				
-					});	
+	// 				});	
 		
-			},
-			'Choose from Appoinment',
-			'select'
-		)
+	// 		},
+	// 		'Choose from Appoinment',
+	// 		'select'
+	// 	)
 		
-	}
+	// }
 
 	change_pos_profile() {
 		return new Promise((resolve) => {
@@ -539,9 +545,9 @@ erpnext.pos.PointOfSale = class PointOfSale {
 		this.page.add_menu_item(__('Change POS Profile'), function() {
 			me.change_pos_profile();
 		});
-		this.page.add_menu_item(__('Get from Appoinment'), function() {
-			me.get_appointment_details();
-		});
+		// this.page.add_menu_item(__('Get from Appoinment'), function() {
+		// 	me.get_appointment_details();
+		// });
 	}
 
 	set_form_action() {
@@ -569,6 +575,9 @@ class POSCart {
 		this.events = events;
 		this.make();
 		this.bind_events();
+		// thisposcart =this;
+		// console.log(["thisposcart",thisposcart]);
+		// console.log(["this",this]);
 	}
 
 	make() {
@@ -669,7 +678,7 @@ class POSCart {
 		`;
 	}
 	call_button(){
-		console.log("in function");
+		// console.log("in function");
 		// frappe.msgprint("jjj");
 	}
 
@@ -836,7 +845,7 @@ class POSCart {
 
 	add_item(item) {
 		this.$empty_state.hide();
-		console.log(["add item",item]);
+		// console.log(["add item",item]);
 
 		if (this.exists(item.item_code)) {
 			// update quantity
@@ -856,16 +865,16 @@ class POSCart {
 				},
 			}).then(r => {
 				if(r.message) {
-					console.log(r.message);
+					// console.log(r.message);
 					
 					const server_item = this.frm.doc.items.find(i => i.item_code === item.item_code);
 					server_item.discount_percentage =100;
 					server_item.rate =0;
-					console.log(["item dis",item.discount_percentage])	;
+					// console.log(["item dis",item.discount_percentage])	;
 					//$item.set_value(item.discount_percentage,100);
 					$item.find('.discount').text(item.discount_percentage + '%');
 					$item.find('.rate').text(item.rate);
-					console.log(item);	
+					// console.log(item);	
 					// frappe.model.set_value(this.frm.doctype, this.frm.docname,
 					// 'discount_amount', ((item.qty*item.rate)+cur_dis_am));
 					this.frm.trigger('discount_amount')
@@ -873,13 +882,13 @@ class POSCart {
 						this.update_discount_fields();
 						this.update_taxes_and_totals();
 						this.update_grand_total();
-						console.log("trigger");
+						// console.log("trigger");
 					});
 				}
 			});
 			const $item = $(this.get_item_html(item));
 			$item.appendTo(this.$cart_items);
-
+			// console.log([item,"$item in add item", $item,]);
 			$item.employee_field = frappe.ui.form.make_control({
 			df: {
 				fieldtype: 'Link',
@@ -889,7 +898,7 @@ class POSCart {
 				onchange: () => {
 					const server_item = this.frm.doc.items.find(i => i.item_code === item.item_code);
 					server_item.attended_by =$item.employee_field.get_value();
-					console.log(["server_item",server_item]);
+					// console.log(["server_item",server_item]);
 					//$item.events.on_customer_change($item.employee_field.get_value());
 				}
 			},
@@ -1062,19 +1071,36 @@ class POSCart {
 						// me.wrapper.find('.customer-field').set_value(r.message.customer);
 						//console.log(customer_field);
 						//customer_field.val(r.message.customer);`
+
 						me.customer_field.set_value(r.message.customer);
-						console.log(r.message.items);
-						for(var i in r.message.items){
-							console.log([i,r.message.items[i]]);
+						
+						// console.log(r.message.items);
+						setTimeout(function(){ 
+							for(var i in r.message.items){
+							// console.log(["in appointment func ",thisposcart]);
+
+							// console.log([i,r.message.items[i]]);
+							thisposcart.update_item_in_cart(i,"qty","+1");
+							// const item = me.frm.doc.items.find(i => i.item_code === item_code);
+							//const $item = $(me.get_item_html(i));
+						// 	setTimeout(function(){ 
+						// 	me.wrapper.find('.employee_field').text(r.message.items[i]);
+						// }, 250); 
+							//console.log(["$item in event", $item]);
+
+
 							//me.add_item(i);
 
 							// me.update_item_in_cart(i,"qty","+1");
 
 
 						}
+
+        			    }, 500); 
+						
 						me.frm.doc.from_appointment=data.appointment;
-						console.log(["app",data.appointment]);
-						console.log(me.frm.doc);
+						// console.log(["app",data.appointment]);
+						// console.log(me.frm.doc);
 					}	
 				
 					});	
@@ -1091,7 +1117,7 @@ class POSCart {
 
 		this.wrapper.on('click', '[data-action="pr"]', function() {
 			//const $item = $(this);
-			console.log("ptomt");
+			// console.log("ptomt");
 			frappe.prompt([
 			    {'fieldname': 'sel', 'fieldtype': 'Select',options: ['Promocode','Voucher'], 'label': 'Select', 'reqd': 1},
 			    {'fieldname': 'code', 'fieldtype': 'Data', 'label': 'Enter code', 'reqd': 1}  
@@ -1106,7 +1132,7 @@ class POSCart {
 							},
 						}).then(r => {
 						if(r.message) {
-							console.log(r.message);
+							// console.log(r.message);
 							frappe.model.set_value(me.frm.doctype, me.frm.docname,
 							'additional_discount_percentage', r.message)
 							.then(() => {
@@ -1116,8 +1142,8 @@ class POSCart {
 								discount_wrapper.trigger('change');
 								});
 							me.frm.doc.promo_code=data.code;
-							console.log(me.frm.doc.promo_code)
-							console.log(me.frm.doc)
+							// console.log(me.frm.doc.promo_code)
+							// console.log(me.frm.doc)
 
 							}
 						else{ msgprint("invalid Promocode");}
@@ -1126,7 +1152,7 @@ class POSCart {
 					}	//if end promo
 
 					if(data.sel == "Voucher"){
-						console.log(["in voucher total",me.frm.doc.grand_total]);
+						// console.log(["in voucher total",me.frm.doc.grand_total]);
 						frappe.call({
 							method: 'voucher.voucher.doctype.vouchers.vouchers.from_pos_call',
 							args: {
@@ -1135,7 +1161,7 @@ class POSCart {
 							},
 						}).then(r => {
 						if(r.message) {
-							console.log(r.message);
+							// console.log(r.message);
 							frappe.model.set_value(me.frm.doctype, me.frm.docname,
 							'discount_amount', flt(r.message));
 							me.frm.trigger('discount_amount')
@@ -1143,7 +1169,7 @@ class POSCart {
 								me.update_discount_fields();
 								me.update_taxes_and_totals();
 								me.update_grand_total();
-								console.log("trigger");
+								// console.log("trigger");
 							});
 							me.frm.doc.voucher=data.code;
 
@@ -1428,7 +1454,7 @@ class POSItems {
 		if (items.length === 1 && (serial_no || batch_no || barcode)) {
 			this.events.update_cart(items[0].item_code,
 				'qty', '+1');
-			console.log("set_items_in cart");
+			// console.log("set_items_in cart");
 			this.reset_search_field();
 		}
 	}
@@ -1448,7 +1474,7 @@ class POSItems {
 	}
 
 	get(item_code) {
-		console.log(["get(item_code)",item_code]);
+		// console.log(["get(item_code)",item_code]);
 		let item = {};
 		this.items.map(data => {
 			if (data.item_code === item_code) {
@@ -1513,7 +1539,7 @@ class POSItems {
 					'pos_profile': this.frm.doc.pos_profile
 				}
 			}).then(r => {
-				console.log(["get items",r.message]);
+				// console.log(["get items",r.message]);
 				// const { items, serial_no, batch_no } = r.message;
 
 				// this.serial_no = serial_no || "";
