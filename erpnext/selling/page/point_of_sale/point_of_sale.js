@@ -325,12 +325,18 @@ erpnext.pos.PointOfSale = class PointOfSale {
 			`<a class="btn btn-primary" onclick="cur_frm.print_preview.printit(true)" style="margin-right: 5px;">
 				${__('Print')}</a>
 			<a class="btn btn-default">
-				${__('New')}</a>`
+				${__('New')}</a>
+			<a class="btn btn-email" style="border: 2px;  color: #fff;  background-color: #5e64ff; border-color: #444bff;">
+				${__('Email')}</a>`
 		);
 
 		$(this.frm.msgbox.body).find('.btn-default').on('click', () => {
 			this.frm.msgbox.hide();
 			this.make_new_invoice();
+		})
+		$(this.frm.msgbox.body).find('.btn-email').on('click', () => {
+			this.frm.msgbox.hide();
+			this.frm.email_doc();
 		})
 	}
 
