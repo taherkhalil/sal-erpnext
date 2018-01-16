@@ -705,6 +705,15 @@ class POSCart {
 					>
 				</div>
 			</div>
+			<div class="list-item">
+			<div class="list-item__content list-item__content--flex-2 text-muted">${__('TIP')}</div>
+				<div class="list-item__content discount-inputs">
+					<input type="text"
+						class="form-control tip text-right"
+						placeholder=" 0.00"
+					>
+				</div>
+			</div>
 		`;
 	}
 
@@ -1247,7 +1256,15 @@ class POSCart {
 					this.update_grand_total();
 				});
 		});
+	this.wrapper.find('.tip').on('change', (e) => {
+		const tip = flt(e.target.value, precision('tip'));
+		frappe.model.set_value(this.frm.doctype, this.frm.docname,
+					'tip', tip);
+		// me.frm.doc.tip = tip;
+		});
 	}
+
+
 
 	update_discount_fields() {
 		let discount_wrapper = this.wrapper.find('.additional_discount_percentage');
