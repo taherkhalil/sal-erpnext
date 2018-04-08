@@ -589,6 +589,8 @@ class POSCart {
 	make() {
 		this.make_dom();
 		this.make_customer_field();
+		this.make_addon_field();
+		this.make_addon_field2();
 		this.make_numpad();
 	}
 
@@ -622,6 +624,9 @@ class POSCart {
 						</div>
 						<div class="promo-code/voucher">
 							${this.get_app()}
+						</div>
+						<div class="add ons">
+							${this.fetch_addons()}
 						</div>
 
 						<div class="grand-total">
@@ -657,6 +662,15 @@ class POSCart {
 
 		const customer = this.frm.doc.customer;
 		this.customer_field.set_value(customer);
+	}
+	fetch_addons(){
+		return `
+			<div class="list-item">
+				<div class="addon1 list-item__content text-right "></div>
+				<div class="addon2 list-item__content text-right"></div>
+			</div>
+		`;
+
 	}
 
 	get_grand_total() {
@@ -769,6 +783,36 @@ class POSCart {
 		this.$grand_total.find('.grand-total-value').text(
 			format_currency(this.frm.doc.grand_total, this.frm.currency)
 		);
+	}
+	make_addon_field(){
+		this.addon_field = frappe.ui.form.make_control({
+			df: {
+				fieldtype: 'Link',
+				label: 'Addon',
+				fieldname: 'customer',
+				options: 'Add On',
+				onchange: () => {
+					this.frm.doc.addons1 =this.addon_field.get_value();
+				}
+			},
+			parent: this.wrapper.find('.addon1'),
+			render_input: true,
+		});
+	}
+	make_addon_field2(){
+		this.addon_field2 = frappe.ui.form.make_control({
+			df: {
+				fieldtype: 'Link',
+				label: 'Addon',
+				fieldname: 'customer',
+				options: 'Add On',
+				onchange: () => {
+					this.frm.doc.addons2 =this.addon_field2.get_value();
+				}
+			},
+			parent: this.wrapper.find('.addon2'),
+			render_input: true,
+		});
 	}
 
 	make_customer_field() {
@@ -1071,7 +1115,17 @@ class POSCart {
 		this.wrapper.on('click','[data-action="appointment"]',function(){
 			console.log("appointment");
 			frappe.prompt([
-		    {'fieldname': 'appointment', 'fieldtype': 'Link', 'label': 'Select Appointment','options':'Appointment', 'reqd': 1}  
+		    {'fieldname': 'appointment', 
+		    'fieldtype': 'Link', 
+		    'label': 'Select Appointment',
+		    'options':'Appointment', 
+		    'reqd': 1,
+			get_query: function() {
+					return {
+						query: 'appointment.appointment_manager.doctype.appointment.appointment.get_appointment_query'
+					}
+				}
+			}  
 		],
 			function(data){
 				frappe.call({
